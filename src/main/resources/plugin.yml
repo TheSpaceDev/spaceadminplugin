@@ -1,8 +1,20 @@
-name: TemplatePlugin
+name: ProtectionPlugin
 version: 1.0
 api-version: 1.13
-main: de.joeakeem.spigotmc.plugin.template.TemplatePlugin
+main: de.joeakeem.spigotmc.plugin.spaceadmin.protection.ProtectionPlugin
 
 commands:
-  enrich:
-    description: Makes you rich!
+  claim:
+    description: Claim a region (/claim start, /claim finish, /claim cancel)
+  unclaim:
+    description: Unclaim the region at your location
+  listclaims:
+    description: List all your claimed regions
+  claimborder:
+    description: Toggle particle border for your claimed regions
+  devsimulate:
+    description: Simulate as another player for testing
+  claimwhitelist:
+    description: Whitelist or remove players for your claimed regions
+  adminclaims:
+    description: Admin GUI to view and remove all claimed regions
