@@ -36,23 +36,23 @@ public class ClaimCommand implements CommandExecutor {
         // Use simulated UUID if present
         if (args.length == 1 && args[0].equalsIgnoreCase("start")) {
             firstCorner.put(uuid, player.getLocation());
-            player.sendMessage("First corner set! Move to the second corner and use /claim finish.");
+            player.sendMessage("Die erste Ecke wurde gesetzt. Nutze /claim finish um die zweite Ecke festzulegen.");
             return true;
         } else if (args.length == 1 && args[0].equalsIgnoreCase("finish")) {
             Location corner1 = firstCorner.get(uuid);
             if (corner1 == null) {
-                player.sendMessage("Use /claim start first.");
+                player.sendMessage("Benutze zuerst /claim start");
                 return true;
             }
-            if (!regionManager.getRegionsByOwner(effectiveUUID).isEmpty()) {
-                player.sendMessage("You can only claim one region.");
+            if (regionManager.getRegionsByOwner(effectiveUUID).size() >= 3) {
+                player.sendMessage("Du kannst höchstens 3 Grunstücke claimen!");
                 return true;
             }
             Location corner2 = player.getLocation();
             // Only allow claiming in overworld
             String worldName = corner1.getWorld().getName();
             if (!worldName.equalsIgnoreCase("world") && !worldName.equalsIgnoreCase("overworld")) {
-                player.sendMessage("You can only claim regions in the overworld.");
+                player.sendMessage("Du kannst nur Grundstücke in der Overworld claimen!");
                 return true;
             }
             // ...existing code...
@@ -61,32 +61,46 @@ public class ClaimCommand implements CommandExecutor {
             double z1 = Math.min(corner1.getZ(), corner2.getZ());
             double z2 = Math.max(corner1.getZ(), corner2.getZ());
             double area = (x2 - x1 + 1) * (z2 - z1 + 1);
-            if (area > 2000) {
-                player.sendMessage("Maximum region size is 2000 blocks (X x Z area). Your selection: " + (int)area);
+            if (area > 5000) { //das entspricht x * z blocken
+                player.sendMessage("Die maximale Fläche pro Grundstück beträgt 5.000 Blöcke. Du hast: " + (int)area);
                 return true;
             }
+
             Region newRegion = new Region(effectiveUUID, corner1, corner2);
             for (Region existing : regionManager.getRegions()) {
                 if (existing.overlaps(newRegion)) {
-                    player.sendMessage("You cannot claim a region that overlaps with an existing claim.");
+                    player.sendMessage("Dein Grundstück überlappt sich mit einem bestehenden Grundstück.");
                     return true;
                 }
             }
+            //überprüfe auch, dass es keine spawnarea ist
+            
+
             regionManager.addRegion(newRegion);
             regionManager.saveRegions();
             firstCorner.remove(uuid);
-            player.sendMessage("Region claimed!");
+            player.sendMessage("Du hast das Grundstück erfolgreich geclaimed! Mit /claimborder kannst du die Grenze anzeigen/ausblenden und mit /claimmanage die Berechtigungen verwalten.");
+
+            // Show claimborder for 30 seconds even if disabled
+            org.bukkit.plugin.Plugin plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("ProtectionPlugin");
+            if (plugin instanceof ProtectionPlugin) {
+                java.util.Set<UUID> borderEnabled = ((ProtectionPlugin) plugin).getBorderEnabledSet();
+                if (!borderEnabled.contains(uuid)) {
+                    borderEnabled.add(uuid);
+                    org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> borderEnabled.remove(uuid), 20L * 30);
+                }
+            }
             return true;
         } else if (args.length == 1 && args[0].equalsIgnoreCase("cancel")) {
             if (firstCorner.containsKey(uuid)) {
                 firstCorner.remove(uuid);
-                player.sendMessage("Claim process cancelled.");
+                player.sendMessage("Claim Vorgang abgebrochen");
             } else {
-                player.sendMessage("No claim process to cancel.");
+                player.sendMessage("Es gibt kein Claim Vorgang zum abbrechen.");
             }
             return true;
         } else {
-            player.sendMessage("Usage: /claim start | /claim finish | /claim cancel");
+            player.sendMessage("Command Nutzung: /claim start | /claim finish | /claim cancel");
             return true;
         }
     }

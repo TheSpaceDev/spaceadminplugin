@@ -23,15 +23,15 @@ public class UnclaimCommand implements CommandExecutor {
         Location loc = player.getLocation();
         Region region = regionManager.getRegionAt(loc);
         if (region == null) {
-            player.sendMessage("No claimed region at your location.");
+            player.sendMessage("Du hast hier kein Grundstück geclaimt. Du kannst /claimmanage benutzen, um deine Grundstücke von überall zu verwalten.");
             return true;
         }
         if (!region.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage("You do not own this region.");
+            player.sendMessage("Dieses Grundstück gehört dir nicht.");
             return true;
         }
         regionManager.removeRegion(region);
-        player.sendMessage("Region unclaimed.");
+        player.sendMessage("Grundstück erfolgreich ungeclaimed. Jeder kann es jetzt betreten, abbauen oder selbst beanspruchen.");
         return true;
     }
 }

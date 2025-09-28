@@ -17,17 +17,17 @@ public class ClaimBorderCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage("Nur Spieler können diesen Befehl verwenden.");
             return true;
         }
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();
         if (borderEnabled.contains(uuid)) {
             borderEnabled.remove(uuid);
-            player.sendMessage("Claim border particles disabled.");
+            player.sendMessage("Die Grundstücks Grenzpartikel wurden deaktiviert.");
         } else {
             borderEnabled.add(uuid);
-            player.sendMessage("Claim border particles enabled.");
+            player.sendMessage("Die Grundstücks Grenzpartikel wurden aktiviert.");
         }
         return true;
     }

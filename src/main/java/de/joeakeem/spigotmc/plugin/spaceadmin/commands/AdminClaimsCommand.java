@@ -29,8 +29,8 @@ public class AdminClaimsCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!player.isOp()) {
-            player.sendMessage("You must be a server operator to use this command.");
+        if (!player.hasPermission("luckperms.admin.manageclaims")) {
+            player.sendMessage("You do not have permission to use this command.");
             return true;
         }
 

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.joeakeem.spigotmc.plugin</groupId>
   <artifactId>space-antigrief</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.21.8-BETA</version>
   <build>
     <plugins>
       <plugin>

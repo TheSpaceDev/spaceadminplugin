@@ -24,13 +24,13 @@ public class ListClaimsCommand implements CommandExecutor {
         UUID uuid = player.getUniqueId();
         List<Region> regions = regionManager.getRegionsByOwner(uuid);
         if (regions.isEmpty()) {
-            player.sendMessage("You have no claimed regions.");
+            player.sendMessage("Du hast noch nichts geclaimed!");
         } else {
-            player.sendMessage("Your claimed regions:");
+            player.sendMessage("Deine geclaimten Grundstücke:");
             for (Region region : regions) {
-                player.sendMessage("- World: " + region.getCorner1().getWorld().getName() + 
-                    " From: " + region.getCorner1().getBlockX() + "," + region.getCorner1().getBlockY() + "," + region.getCorner1().getBlockZ() +
-                    " To: " + region.getCorner2().getBlockX() + "," + region.getCorner2().getBlockY() + "," + region.getCorner2().getBlockZ());
+                player.sendMessage("- Welt: " + region.getCorner1().getWorld().getName() + 
+                    " Von: " + region.getCorner1().getBlockX() + "," + region.getCorner1().getBlockY() + "," + region.getCorner1().getBlockZ() +
+                    " Bis: " + region.getCorner2().getBlockX() + "," + region.getCorner2().getBlockY() + "," + region.getCorner2().getBlockZ());
             }
         }
         return true;

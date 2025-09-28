@@ -12,9 +12,9 @@ commands:
     description: List all your claimed regions
   claimborder:
     description: Toggle particle border for your claimed regions
-  devsimulate:
-    description: Simulate as another player for testing
-  claimwhitelist:
-    description: Whitelist or remove players for your claimed regions
   adminclaims:
     description: Admin GUI to view and remove all claimed regions
+  claimmanage:
+    description: Manage your claim with a GUI
+  spawnarea:
+    description: Set or delete spawn protection areas (OP only)
