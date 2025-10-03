@@ -12,6 +12,9 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ProtectionPlugin extends JavaPlugin {
+    public SpawnAreaManager getSpawnAreaManager() {
+        return spawnAreaManager;
+    }
     public Set<UUID> getBorderEnabledSet() {
         return borderEnabled;
     }
@@ -51,90 +54,51 @@ public class ProtectionPlugin extends JavaPlugin {
         this.getCommand("adminclaims").setExecutor(new de.joeakeem.spigotmc.plugin.spaceadmin.commands.AdminClaimsCommand(regionManager));
         getServer().getPluginManager().registerEvents(new de.joeakeem.spigotmc.plugin.spaceadmin.commands.AdminClaimsListener(regionManager), this);
         this.getCommand("spawnarea").setExecutor(new SpawnAreaCommand(spawnAreaManager));
-        // Schedule particle border display for toggled players
-        getServer().getScheduler().runTaskTimer(this, () -> {
-            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                UUID uuid = player.getUniqueId();
-                UUID effectiveUUID = simulationMap.getOrDefault(uuid, uuid);
-                // Show claim borders if enabled
-                if (borderEnabled.contains(uuid)) {
-                    boolean hasOwnClaim = false;
+        // Schedule glass pillar display for toggled players
+        getServer().getScheduler().runTaskTimer(this, new Runnable() {
+            private boolean show = true;
+            @Override
+            public void run() {
+                for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                    // Show pillars for claims
                     for (Region region : regionManager.getRegions()) {
-                        if (region.getOwner().equals(effectiveUUID)) {
-                            showRegionBorder(player, region, org.bukkit.Particle.VILLAGER_HAPPY);
-                            hasOwnClaim = true;
-                        }
+                        showOrHidePillars(region.getCorner1(), region.getCorner2(), player, show);
                     }
-                    for (Region region : regionManager.getRegions()) {
-                        if (!region.getOwner().equals(effectiveUUID)) {
-                            showRegionBorder(player, region, org.bukkit.Particle.REDSTONE);
+                    // Show pillars for spawn areas
+                    if (spawnAreaManager != null) {
+                        for (SpawnArea area : spawnAreaManager.getSpawnAreas()) {
+                            showOrHidePillars(area.getCorner1(), area.getCorner2(), player, show);
                         }
                     }
                 }
-                // Always show blue border for all spawn areas for all players
-                if (spawnAreaManager != null) {
-                    for (SpawnArea area : spawnAreaManager.getSpawnAreas()) {
-                        showSpawnAreaBorder(player, area);
-                    }
-                }
+                show = !show;
             }
-        }, 20L, 40L); // every 2 seconds
-
+        }, 0L, 100L); // 5 seconds
     }
 
-    private void showSpawnAreaBorder(org.bukkit.entity.Player player, SpawnArea area) {
-        org.bukkit.Location c1 = area.getCorner1();
-        org.bukkit.Location c2 = area.getCorner2();
+    // Helper to show/hide blue glass pillars at corners
+    private void showOrHidePillars(org.bukkit.Location c1, org.bukkit.Location c2, org.bukkit.entity.Player player, boolean show) {
+        org.bukkit.World world = c1.getWorld();
         int minX = Math.min(c1.getBlockX(), c2.getBlockX());
         int maxX = Math.max(c1.getBlockX(), c2.getBlockX());
         int minZ = Math.min(c1.getBlockZ(), c2.getBlockZ());
         int maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ());
-        // Show border from y=-100 to y=200
-        org.bukkit.Particle.DustOptions blue = new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(0, 102, 255), 1.0F);
-        for (int y = -100; y <= 200; y += 5) {
-            for (int x = minX; x <= maxX; x++) {
-                player.spawnParticle(org.bukkit.Particle.REDSTONE, x + 0.5, y + 0.2, minZ + 0.5, 1, 0, 0, 0, 0, blue);
-                player.spawnParticle(org.bukkit.Particle.REDSTONE, x + 0.5, y + 0.2, maxZ + 0.5, 1, 0, 0, 0, 0, blue);
-            }
-            for (int z = minZ; z <= maxZ; z++) {
-                player.spawnParticle(org.bukkit.Particle.REDSTONE, minX + 0.5, y + 0.2, z + 0.5, 1, 0, 0, 0, 0, blue);
-                player.spawnParticle(org.bukkit.Particle.REDSTONE, maxX + 0.5, y + 0.2, z + 0.5, 1, 0, 0, 0, 0, blue);
-            }
-        }
-    }
-
-    private void showRegionBorder(org.bukkit.entity.Player player, Region region, org.bukkit.Particle particleType) {
-        org.bukkit.Location c1 = region.getCorner1();
-        org.bukkit.Location c2 = region.getCorner2();
-        int minX = Math.min(c1.getBlockX(), c2.getBlockX());
-        int maxX = Math.max(c1.getBlockX(), c2.getBlockX());
-        int minZ = Math.min(c1.getBlockZ(), c2.getBlockZ());
-        int maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ());
-        // Show border from y=-100 to y=200
-        Object data = null;
-        if (particleType == org.bukkit.Particle.REDSTONE) {
-            data = new org.bukkit.Particle.DustOptions(org.bukkit.Color.RED, 1.0F);
-        }
-        for (int y = -100; y <= 200; y += 5) {
-            for (int x = minX; x <= maxX; x++) {
-                if (data != null)
-                    player.spawnParticle(particleType, x + 0.5, y + 0.2, minZ + 0.5, 1, 0, 0, 0, 0, data);
-                else
-                    player.spawnParticle(particleType, x + 0.5, y + 0.2, minZ + 0.5, 1);
-                if (data != null)
-                    player.spawnParticle(particleType, x + 0.5, y + 0.2, maxZ + 0.5, 1, 0, 0, 0, 0, data);
-                else
-                    player.spawnParticle(particleType, x + 0.5, y + 0.2, maxZ + 0.5, 1);
-            }
-            for (int z = minZ; z <= maxZ; z++) {
-                if (data != null)
-                    player.spawnParticle(particleType, minX + 0.5, y + 0.2, z + 0.5, 1, 0, 0, 0, 0, data);
-                else
-                    player.spawnParticle(particleType, minX + 0.5, y + 0.2, z + 0.5, 1);
-                if (data != null)
-                    player.spawnParticle(particleType, maxX + 0.5, y + 0.2, z + 0.5, 1, 0, 0, 0, 0, data);
-                else
-                    player.spawnParticle(particleType, maxX + 0.5, y + 0.2, z + 0.5, 1);
+        org.bukkit.Material glass = org.bukkit.Material.BLUE_STAINED_GLASS;
+        org.bukkit.Location[] corners = new org.bukkit.Location[] {
+            new org.bukkit.Location(world, minX, world.getHighestBlockYAt(minX, minZ) + 1, minZ),
+            new org.bukkit.Location(world, minX, world.getHighestBlockYAt(minX, maxZ) + 1, maxZ),
+            new org.bukkit.Location(world, maxX, world.getHighestBlockYAt(maxX, minZ) + 1, minZ),
+            new org.bukkit.Location(world, maxX, world.getHighestBlockYAt(maxX, maxZ) + 1, maxZ)
+        };
+        int pillarHeight = 20;
+        for (org.bukkit.Location corner : corners) {
+            for (int y = 0; y < pillarHeight; y++) {
+                org.bukkit.Location blockLoc = corner.clone().add(0, y, 0);
+                if (show) {
+                    player.sendBlockChange(blockLoc, glass.createBlockData());
+                } else {
+                    player.sendBlockChange(blockLoc, blockLoc.getBlock().getBlockData());
+                }
             }
         }
     }

@@ -24,12 +24,58 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ProtectionListener implements Listener {
+    // Helper to check if a block is a blue glass pillar at a claim or spawn area corner
+    private boolean isProtectedGlassPillar(Location loc) {
+        org.bukkit.Material glass = org.bukkit.Material.BLUE_STAINED_GLASS;
+        if (loc.getBlock().getType() != glass) return false;
+        // Check all claim corners
+        for (Region region : regionManager.getRegions()) {
+            Location[] corners = getCorners(region.getCorner1(), region.getCorner2());
+            for (Location corner : corners) {
+                if (corner.getWorld().equals(loc.getWorld()) && corner.getBlockX() == loc.getBlockX() && corner.getBlockZ() == loc.getBlockZ()) {
+                    return true;
+                }
+            }
+        }
+        // Check all spawn area corners
+        if (spawnAreaManager != null) {
+            for (SpawnArea area : spawnAreaManager.getSpawnAreas()) {
+                Location[] corners = getCorners(area.getCorner1(), area.getCorner2());
+                for (Location corner : corners) {
+                    if (corner.getWorld().equals(loc.getWorld()) && corner.getBlockX() == loc.getBlockX() && corner.getBlockZ() == loc.getBlockZ()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private Location[] getCorners(Location c1, Location c2) {
+        int minX = Math.min(c1.getBlockX(), c2.getBlockX());
+        int maxX = Math.max(c1.getBlockX(), c2.getBlockX());
+        int minZ = Math.min(c1.getBlockZ(), c2.getBlockZ());
+        int maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ());
+        int minY = Math.min(c1.getBlockY(), c2.getBlockY());
+        Location worldLoc = new Location(c1.getWorld(), 0, 0, 0);
+        return new Location[] {
+            new Location(c1.getWorld(), minX, minY, minZ),
+            new Location(c1.getWorld(), minX, minY, maxZ),
+            new Location(c1.getWorld(), maxX, minY, minZ),
+            new Location(c1.getWorld(), maxX, minY, maxZ)
+        };
+    }
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         if (spawnAreaManager != null && spawnAreaManager.isInSpawnArea(player.getLocation()) && !player.isOp()) {
             event.setCancelled(true);
             player.sendMessage("§cIm Spawnbereich darfst du nichts machen.");
+        }
+        // Prevent dropping blue glass from pillars
+        if (isProtectedGlassPillar(event.getItemDrop().getLocation())) {
+            event.setCancelled(true);
+            player.sendMessage("§cDu kannst diese Glassäule nicht droppen.");
         }
     }
 
@@ -40,6 +86,10 @@ public class ProtectionListener implements Listener {
         if (spawnAreaManager != null && spawnAreaManager.isInSpawnArea(player.getLocation()) && !player.isOp()) {
             event.setCancelled(true);
             player.sendMessage("§cIm Spawnbereich darfst du nichts machen.");
+        }
+        // Prevent picking up blue glass from pillars
+        if (isProtectedGlassPillar(event.getItem().getLocation())) {
+            event.setCancelled(true);
         }
     }
 
@@ -177,6 +227,11 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        // Prevent breaking blue glass pillars
+        if (isProtectedGlassPillar(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cDu kannst diese Glassäule nicht zerstören.");
+        }
         Player player = event.getPlayer();
         if (player.isOp()) return;
         if (spawnAreaManager != null && spawnAreaManager.isInSpawnArea(event.getBlock().getLocation())) {
@@ -204,6 +259,11 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        // Prevent placing blue glass at pillar locations
+        if (isProtectedGlassPillar(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cDu kannst hier keine Glassäule platzieren.");
+        }
         Player player = event.getPlayer();
         if (player.isOp()) return;
         if (spawnAreaManager != null && spawnAreaManager.isInSpawnArea(event.getBlock().getLocation())) {
