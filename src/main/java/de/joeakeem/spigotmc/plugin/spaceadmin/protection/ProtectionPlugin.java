@@ -1,4 +1,3 @@
-
 package de.joeakeem.spigotmc.plugin.spaceadmin.protection;
 import de.joeakeem.spigotmc.plugin.spaceadmin.protection.SpawnAreaManager;
 import de.joeakeem.spigotmc.plugin.spaceadmin.protection.SpawnAreaCommand;
@@ -12,6 +11,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ProtectionPlugin extends JavaPlugin {
+    // Remove glass pillars for a region for all online players
+    public void removeClaimPillars(Region region) {
+        org.bukkit.Location c1 = region.getCorner1();
+        org.bukkit.Location c2 = region.getCorner2();
+        for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+            showOrHidePillars(c1, c2, player, false);
+        }
+    }
     public SpawnAreaManager getSpawnAreaManager() {
         return spawnAreaManager;
     }
@@ -37,7 +44,8 @@ public class ProtectionPlugin extends JavaPlugin {
         }
         regionManager = new RegionManager();
         regionManager.loadRegions();
-        spawnAreaManager = new SpawnAreaManager();
+    spawnAreaManager = new SpawnAreaManager();
+    spawnAreaManager.loadSpawnAreas(getServer());
         this.getCommand("claim").setExecutor(new ClaimCommand(regionManager, simulationMap));
         this.getCommand("claim").setTabCompleter(new ClaimTabCompleter());
         this.getCommand("unclaim").setExecutor(new UnclaimCommand(regionManager));
@@ -105,6 +113,7 @@ public class ProtectionPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        regionManager.saveRegions();
+    regionManager.saveRegions();
+    spawnAreaManager.saveSpawnAreas();
     }
 }

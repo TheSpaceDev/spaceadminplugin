@@ -1,5 +1,9 @@
 package de.joeakeem.spigotmc.plugin.spaceadmin.protection;
 
+import de.joeakeem.spigotmc.plugin.spaceadmin.protection.Region;
+import de.joeakeem.spigotmc.plugin.spaceadmin.protection.RegionManager;
+import de.joeakeem.spigotmc.plugin.spaceadmin.protection.ClaimPermission;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -61,9 +65,33 @@ public class ClaimManageGUI implements Listener, CommandExecutor {
             player.sendMessage("Du hast keinen Claim zum Verwalten.");
             return true;
         }
-        Region region = regions.get(0);
-        openMainGUI(player, region);
+        if (regions.size() == 1) {
+            openMainGUI(player, regions.get(0));
+        } else {
+            openClaimSelectGUI(player, regions);
+        }
         return true;
+    }
+
+    // Pre-menu to select which claim to manage
+    public void openClaimSelectGUI(Player player, List<Region> regions) {
+    int size = Math.min(54, Math.max(9, ((regions.size() - 1) / 9 + 1) * 9));
+    Inventory inv = Bukkit.createInventory(null, size, "§eClaim auswählen");
+        int slot = 0;
+        for (Region region : regions) {
+            ItemStack item = new ItemStack(Material.GRASS_BLOCK);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName("§aClaim " + (slot + 1));
+            meta.setLore(List.of(
+                "Welt: " + region.getCorner1().getWorld().getName(),
+                "Ecke1: " + region.getCorner1().getBlockX() + "," + region.getCorner1().getBlockZ(),
+                "Ecke2: " + region.getCorner2().getBlockX() + "," + region.getCorner2().getBlockZ(),
+                "§8UUID:" + region.getOwner().toString() + ":" + region.getCorner1().getBlockX() + ":" + region.getCorner1().getBlockZ()
+            ));
+            item.setItemMeta(meta);
+            inv.setItem(slot++, item);
+        }
+        player.openInventory(inv);
     }
 
 
@@ -248,6 +276,18 @@ public class ClaimManageGUI implements Listener, CommandExecutor {
     public void onInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
         String title = event.getView().getTitle();
+    if (title.equals("§eClaim auswählen")) {
+        event.setCancelled(true);
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked == null || !clicked.hasItemMeta()) return;
+        List<Region> regions = regionManager.getRegionsByOwner(player.getUniqueId());
+        if (regions.isEmpty()) return;
+        int slot = event.getSlot();
+        if (slot < 0 || slot >= regions.size()) return;
+        Region selected = regions.get(slot);
+        openMainGUI(player, selected);
+        return;
+    }
     if (title.equals("§eClaim Management")) {
             event.setCancelled(true);
             ItemStack clicked = event.getCurrentItem();
@@ -264,6 +304,10 @@ public class ClaimManageGUI implements Listener, CommandExecutor {
                 openDefaultPermissionsGUI(player, region);
             } else if (name.equals("§cClaim entfernen")) {
                 regionManager.removeRegion(region);
+                ProtectionPlugin plugin = (ProtectionPlugin) org.bukkit.Bukkit.getPluginManager().getPlugin("spaceadminplugin");
+                if (plugin != null) {
+                    plugin.removeClaimPillars(region);
+                }
                 player.closeInventory();
                 player.sendMessage("§cClaim entfernt.");
             }

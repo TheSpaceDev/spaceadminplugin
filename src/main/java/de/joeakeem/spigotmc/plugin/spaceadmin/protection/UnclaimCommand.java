@@ -1,4 +1,5 @@
 package de.joeakeem.spigotmc.plugin.spaceadmin.protection;
+import de.joeakeem.spigotmc.plugin.spaceadmin.protection.ProtectionPlugin;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -31,6 +32,10 @@ public class UnclaimCommand implements CommandExecutor {
             return true;
         }
         regionManager.removeRegion(region);
+        ProtectionPlugin plugin = (ProtectionPlugin) org.bukkit.Bukkit.getPluginManager().getPlugin("spaceadminplugin");
+        if (plugin != null) {
+            plugin.removeClaimPillars(region);
+        }
         player.sendMessage("Grundstück erfolgreich ungeclaimed. Jeder kann es jetzt betreten, abbauen oder selbst beanspruchen.");
         return true;
     }

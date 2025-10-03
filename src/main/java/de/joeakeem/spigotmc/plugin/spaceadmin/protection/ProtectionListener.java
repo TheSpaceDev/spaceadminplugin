@@ -112,6 +112,16 @@ public class ProtectionListener implements Listener {
         if (spawnAreaManager != null && spawnAreaManager.isInSpawnArea(player.getLocation())) {
             event.setCancelled(true);
             // player.sendMessage("§cIm Spawnbereich darfst du niemanden angreifen.");
+            return;
+        }
+        if (player.hasPermission("luckperms.admin.bypassprotection")) return;
+        UUID effectiveUUID = simulationMap.getOrDefault(player.getUniqueId(), player.getUniqueId());
+        Region region = regionManager.getRegionAt(player.getLocation());
+        if (region != null && !region.getOwner().equals(effectiveUUID)) {
+            if (!region.hasPermission(effectiveUUID, ClaimPermission.ATTACK)) {
+                event.setCancelled(true);
+                player.sendMessage("§cDu darfst in diesem Gebiet niemanden angreifen.");
+            }
         }
     }
     private final RegionManager regionManager;

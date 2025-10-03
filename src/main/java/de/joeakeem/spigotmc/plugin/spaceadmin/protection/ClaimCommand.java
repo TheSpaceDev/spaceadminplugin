@@ -51,8 +51,8 @@ public class ClaimCommand implements CommandExecutor {
                 player.sendMessage("Benutze zuerst /claim start");
                 return true;
             }
-            if (regionManager.getRegionsByOwner(effectiveUUID).size() >= 3) {
-                player.sendMessage("Du kannst höchstens 3 Grunstücke claimen!");
+            if (regionManager.getRegionsByOwner(effectiveUUID).size() >= 4) {
+                player.sendMessage("Du kannst höchstens 4 Grunstücke claimen!");
                 return true;
             }
             Location corner2 = player.getLocation();
